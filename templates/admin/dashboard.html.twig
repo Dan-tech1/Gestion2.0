@@ -1,0 +1,148 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard Administrateur{% endblock %}
+
+{% block body %}
+<div class="mb-8">
+    <h1 class="text-4xl font-bold text-gray-800 mb-2">
+        <i class="fas fa-crown text-red-500 mr-3"></i>
+        Dashboard Administrateur
+    </h1>
+    <p class="text-gray-600">Gérez les utilisateurs, espaces de travail et le système</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-blue-500 hover:shadow-xl transition duration-300">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-users text-blue-600 text-2xl"></i>
+            </div>
+            <span class="text-3xl font-bold text-blue-600">{{ users|length }}</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700">Utilisateurs</h3>
+        <a href="{{ path('admin_users') }}" class="mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium inline-block">
+            Gérer <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-purple-500 hover:shadow-xl transition duration-300">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-layer-group text-purple-600 text-2xl"></i>
+            </div>
+            <span class="text-3xl font-bold text-purple-600">{{ workspaces|length }}</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700">Espaces de travail</h3>
+        <a href="{{ path('admin_workspaces') }}" class="mt-2 text-purple-600 hover:text-purple-700 text-sm font-medium inline-block">
+            Gérer <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-green-500 hover:shadow-xl transition duration-300">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-project-diagram text-green-600 text-2xl"></i>
+            </div>
+            <span class="text-3xl font-bold text-green-600">{{ projects|length }}</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700">Projets</h3>
+        <p class="text-gray-500 text-sm mt-1">Total dans le système</p>
+        {# <a href="{{ path('admin_projects') }}" class="mt-2 text-green-600 hover:text-green-700 text-sm font-medium inline-block">
+            Gérer <i class="fas fa-arrow-right ml-1"></i>
+        </a> #}
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-6 border-t-4 border-orange-500 hover:shadow-xl transition duration-300">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-orange-600 text-2xl"></i>
+            </div>
+            <span class="text-3xl font-bold text-orange-600">{{ issues|length }}</span>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700">Signalements</h3>
+        <p class="text-gray-500 text-sm mt-1">Problèmes signalés</p>
+    </div>
+</div>
+
+{% if issues|length > 0 %}
+<div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        <i class="fas fa-exclamation-triangle mr-2 text-orange-500"></i>
+        Signalements en attente ({{ issues|length }})
+    </h2>
+    
+    <div class="space-y-4">
+        {% for issue in issues %}
+        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition duration-200">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-800">{{ issue.title }}</h3>
+                    <p class="text-sm text-gray-600 mt-1">{{ issue.description }}</p>
+                    <div class="text-xs text-gray-500 mt-2">
+                        Tâche: {{ issue.task.title }} • Signalé par: {{ issue.reportedBy.username }} • Projet: {{ issue.task.project.name }}
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <button onclick="resolveIssue({{ issue.id }})" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded transition duration-200">
+                        <i class="fas fa-check"></i> Résoudre
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-lg p-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        <i class="fas fa-shield-alt mr-2 text-red-500"></i>
+        Contrôle du système
+    </h2>
+    
+    <div class="flex space-x-4">
+        <form method="post" action="{{ path('admin_system_lock') }}" onsubmit="return confirm('Êtes-vous sûr de vouloir verrouiller tous les comptes ?');">
+            <button type="submit" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-300">
+                <i class="fas fa-lock mr-2"></i>
+                Verrouiller le système
+            </button>
+        </form>
+
+        <form method="post" action="{{ path('admin_system_unlock') }}" onsubmit="return confirm('Êtes-vous sûr de vouloir déverrouiller tous les comptes ?');">
+            <button type="submit" class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-300">
+                <i class="fas fa-unlock mr-2"></i>
+                Déverrouiller le système
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function resolveIssue(issueId) {
+    if (!confirm('Êtes-vous sûr de vouloir marquer ce signalement comme résolu ?')) {
+        return;
+    }
+
+    fetch(`/admin/issue/${issueId}/resolve`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur lors de la résolution du signalement');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur lors de la résolution du signalement');
+    });
+}
+</script>
+{% endblock %}

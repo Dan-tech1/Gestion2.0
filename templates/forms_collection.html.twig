@@ -1,0 +1,168 @@
+{# templates/admin/user_form.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{% if is_edit %}Modifier{% else %}Créer{% endif %} un utilisateur{% endblock %}
+
+{% block body %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">
+        <i class="fas fa-user-{% if is_edit %}edit{% else %}plus{% endif %} mr-2 text-blue-500"></i>
+        {% if is_edit %}Modifier{% else %}Créer{% endif %} un utilisateur
+    </h1>
+
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        {{ form_start(form) }}
+        
+        <div class="mb-6">
+            {{ form_label(form.username, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.username, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}}) }}
+            {{ form_errors(form.username) }}
+        </div>
+
+        <div class="mb-6">
+            {{ form_label(form.email, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.email, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}}) }}
+            {{ form_errors(form.email) }}
+        </div>
+
+        <div class="mb-6">
+            {{ form_label(form.plainPassword, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.plainPassword, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'}}) }}
+            {{ form_errors(form.plainPassword) }}
+            {% if is_edit %}
+                <p class="text-xs text-gray-500 mt-1">Laissez vide pour conserver le mot de passe actuel</p>
+            {% endif %}
+        </div>
+
+        <div class="mb-6">
+            {{ form_label(form.roles, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.roles) }}
+            {{ form_errors(form.roles) }}
+        </div>
+
+        <div class="mb-6">
+            <label class="flex items-center">
+                {{ form_widget(form.isActive, {'attr': {'class': 'mr-2'}}) }}
+                {{ form_label(form.isActive, null, {'label_attr': {'class': 'text-sm font-semibold text-gray-700'}}) }}
+            </label>
+            {{ form_errors(form.isActive) }}
+        </div>
+
+        <div class="flex space-x-4">
+            <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg transition duration-300">
+                <i class="fas fa-save mr-2"></i>
+                {% if is_edit %}Enregistrer{% else %}Créer{% endif %}
+            </button>
+            <a href="{{ path('admin_users') }}" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition duration-200">
+                <i class="fas fa-times mr-2"></i>Annuler
+            </a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
+
+{# templates/admin/workspace_form.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{% if is_edit %}Modifier{% else %}Créer{% endif %} un espace de travail{% endblock %}
+
+{% block body %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">
+        <i class="fas fa-layer-group mr-2 text-purple-500"></i>
+        {% if is_edit %}Modifier{% else %}Créer{% endif %} un espace de travail
+    </h1>
+
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        {{ form_start(form) }}
+        
+        <div class="mb-6">
+            {{ form_label(form.name, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.name, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent'}}) }}
+            {{ form_errors(form.name) }}
+        </div>
+
+        <div class="mb-6">
+            {{ form_label(form.description, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.description, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent', 'rows': '4'}}) }}
+            {{ form_errors(form.description) }}
+        </div>
+
+        <div class="mb-6">
+            {{ form_label(form.manager, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.manager, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent'}}) }}
+            {{ form_errors(form.manager) }}
+        </div>
+
+        <div class="flex space-x-4">
+            <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg shadow-lg transition duration-300">
+                <i class="fas fa-save mr-2"></i>
+                {% if is_edit %}Enregistrer{% else %}Créer{% endif %}
+            </button>
+            <a href="{{ path('admin_workspaces') }}" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition duration-200">
+                <i class="fas fa-times mr-2"></i>Annuler
+            </a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
+
+{# templates/project_manager/project_form.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}{% if is_edit %}Modifier{% else %}Créer{% endif %} un projet{% endblock %}
+
+{% block body %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">
+        <i class="fas fa-project-diagram mr-2 text-green-500"></i>
+        {% if is_edit %}Modifier{% else %}Créer{% endif %} un projet
+    </h1>
+
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        {{ form_start(form) }}
+        
+        <div class="mb-6">
+            {{ form_label(form.name, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.name, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'}}) }}
+            {{ form_errors(form.name) }}
+        </div>
+
+        <div class="mb-6">
+            {{ form_label(form.description, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.description, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent', 'rows': '4'}}) }}
+            {{ form_errors(form.description) }}
+        </div>
+
+        {% if form.workspace is defined %}
+        <div class="mb-6">
+            {{ form_label(form.workspace, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.workspace, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'}}) }}
+            {{ form_errors(form.workspace) }}
+        </div>
+        {% endif %}
+
+        <div class="mb-6">
+            {{ form_label(form.status, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+            {{ form_widget(form.status, {'attr': {'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent'}}) }}
+            {{ form_errors(form.status) }}
+        </div>
+
+        <div class="flex space-x-4">
+            <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold rounded-lg shadow-lg transition duration-300">
+                <i class="fas fa-save mr-2"></i>
+                {% if is_edit %}Enregistrer{% else %}Créer{% endif %}
+            </button>
+            <a href="{{ path('app_dashboard') }}" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition duration-200">
+                <i class="fas fa-times mr-2"></i>Annuler
+            </a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,634 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block body %}
+<div class="mb-8">
+    <div class="flex justify-between items-start">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ project.name }}</h1>
+            <p class="text-gray-600">{{ project.description }}</p>
+        </div>
+        {% if project.createdBy == app.user %}
+        <div class="flex space-x-3">
+            <a href="{{ path('pm_project_edit', {id: project.id}) }}" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200">
+                <i class="fas fa-edit mr-2"></i>Modifier
+            </a>
+            <a href="{{ path('pm_project_members', {id: project.id}) }}" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition duration-200">
+                <i class="fas fa-users mr-2"></i>Membres
+            </a>
+        </div>
+        </div>
+        {% endif %}
+        <!-- Images du projet -->
+        <div class="col-span-full mt-6">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-semibold text-gray-700">
+                    <i class="fas fa-images mr-2 text-blue-500"></i>Images du projet
+                </h3>
+                {% if project.createdBy == app.user %}
+                <button id="upload-btn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition duration-200">
+                    <i class="fas fa-upload mr-2"></i>Ajouter une image
+                </button>
+                {% endif %}
+            </div>
+
+            <div id="images-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for image in project.images %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img src="{{ asset('uploads/project_images/' ~ image.filename) }}"
+                         alt="{{ image.originalName }}"
+                         class="w-full h-48 object-cover">
+                    <div class="p-3">
+                        <p class="text-sm text-gray-600 truncate">{{ image.originalName }}</p>
+                        <p class="text-xs text-gray-400">{{ image.uploadedAt|date('d/m/Y H:i') }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if project.images is empty %}
+            <div class="bg-gray-50 rounded-lg p-8 text-center">
+                <i class="fas fa-image text-gray-300 text-4xl mb-4"></i>
+                <p class="text-gray-500">Aucune image pour ce projet</p>
+                {% if project.createdBy == app.user %}
+                <p class="text-sm text-gray-400 mt-2">Cliquez sur "Ajouter une image" pour commencer</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Modal d'upload -->
+        <div id="upload-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-lg max-w-md w-full p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Ajouter une image</h3>
+                        <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="image-input" class="block text-sm font-medium text-gray-700 mb-2">
+                                Sélectionner une image
+                            </label>
+                            <input type="file" id="image-input" name="image" accept="image/*"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Formats acceptés: JPEG, PNG, GIF, WebP. Taille max: 5MB</p>
+                        </div>
+
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" id="cancel-upload" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+                                Annuler
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50" id="submit-upload" disabled>
+                                <i class="fas fa-upload mr-2"></i>Uploader
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="upload-progress" class="hidden mt-4">
+                        <div class="bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">Upload en cours...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm mb-1">Statut</p>
+                {% if project.status == 'TERMINE' %}
+                    <p class="text-2xl font-bold text-green-600">
+                        <i class="fas fa-check-circle mr-2"></i>Terminé
+                    </p>
+                {% else %}
+                    <p class="text-2xl font-bold text-blue-600">
+                        <i class="fas fa-spinner mr-2"></i>En cours
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm mb-1">Tâches</p>
+                <p class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-tasks mr-2 text-blue-500"></i>
+                    {{ project.tasks|length }}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm mb-1">Membres</p>
+                <p class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-users mr-2 text-purple-500"></i>
+                    {{ project.projectMembers|length }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if issues|length > 0 %}
+<div class="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-6 mb-8">
+    <h3 class="text-lg font-semibold text-orange-800 mb-4">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        Problèmes non résolus ({{ issues|length }})
+    </h3>
+    <div class="space-y-3">
+        {% for issue in issues %}
+        <div class="bg-white rounded-lg p-4 shadow">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h4 class="font-semibold text-gray-800">{{ issue.title }}</h4>
+                    <p class="text-sm text-gray-600 mt-1">{{ issue.description }}</p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Tâche: {{ issue.task.title }} • Signalé par: {{ issue.reportedBy.username }}
+                    </p>
+                </div>
+                {% if project.createdBy == app.user %}
+                <button onclick="resolveIssue({{ issue.id }})" class="ml-4 px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded">
+                    Résoudre
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-list-check mr-2 text-blue-500"></i>
+            Tâches
+        </h2>
+        {% if project.createdBy == app.user %}
+        <a href="{{ path('pm_task_new', {id: project.id}) }}" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition duration-200">
+            <i class="fas fa-plus mr-2"></i>Nouvelle tâche
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if project.tasks|length > 0 %}
+    <div class="space-y-4">
+        {% for task in project.tasks %}
+        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800">{{ task.title }}</h3>
+                        {% if task.status == 'TERMINE' %}
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                <i class="fas fa-check-circle mr-1"></i>Terminé
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                                <i class="fas fa-clock mr-1"></i>En cours
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-gray-600 text-sm mb-3">{{ task.description }}</p>
+                    
+                    <div class="flex items-center gap-4 text-sm text-gray-500">
+                        {% if task.assignedTo %}
+                            <span>
+                                <i class="fas fa-user mr-1 text-blue-500"></i>
+                                {{ task.assignedTo.username }}
+                            </span>
+                        {% else %}
+                            <span class="text-gray-400">
+                                <i class="fas fa-user-slash mr-1"></i>
+                                Non assigné
+                            </span>
+                        {% endif %}
+                        
+                        {% if task.dueDate %}
+                            <span>
+                                <i class="fas fa-calendar mr-1 text-purple-500"></i>
+                                {{ task.dueDate|date('d/m/Y') }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if project.createdBy == app.user %}
+                <a href="{{ path('pm_task_edit', {id: task.id}) }}" class="ml-4 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded transition duration-200">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <i class="fas fa-clipboard-list text-6xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500">Aucune tâche pour ce projet</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-folder-open mr-2 text-green-500"></i>
+            Contenu du projet
+        </h2>
+        {% if project.createdBy == app.user %}
+        <button onclick="uploadFile({{ project.id }})" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition duration-200">
+            <i class="fas fa-upload mr-2"></i>Ajouter un fichier
+        </button>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Images du projet -->
+        <div class="col-span-full mb-4">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                <i class="fas fa-images mr-2 text-blue-500"></i>Images du projet
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Images du projet -->
+                {% set project_images_dir = 'uploads/projects/' ~ project.id ~ '/' %}
+                {% set project_images = [] %}
+                
+                <!-- Simuler des images pour ce projet (à remplacer par un vrai système) -->
+                {% if project.id == 1 %}
+                    {% set project_images = ['screenshot1.jpg', 'mockup1.png', 'diagram1.svg'] %}
+                {% elseif project.id == 2 %}
+                    {% set project_images = ['design2.jpg', 'prototype2.png'] %}
+                {% elseif project.id == 3 %}
+                    {% set project_images = ['architecture3.jpg', 'flowchart3.png', 'ui3.jpg'] %}
+                {% endif %}
+                
+                {% for image_filename in project_images %}
+                <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden group relative">
+                    <img src="{{ asset(project_images_dir ~ image_filename) }}" 
+                         alt="Image du projet {{ project.name }}" 
+                         class="w-full h-full object-cover hover:scale-105 transition duration-200"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <button class="bg-white text-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-100 transition duration-200">
+                            <i class="fas fa-eye mr-1"></i>Voir
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                {% if project_images is empty %}
+                <!-- Placeholder quand aucune image -->
+                <div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                    <div class="text-center">
+                        <i class="fas fa-image text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-500">Aucune image</p>
+                        <p class="text-xs text-gray-400 mt-1">Ajoutez des captures d'écran ou mockups</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Bouton d'ajout d'image -->
+                <div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition duration-200 cursor-pointer" onclick="uploadImage({{ project.id }})">
+                    <div class="text-center">
+                        <i class="fas fa-plus text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-500">Ajouter une image</p>
+                        <p class="text-xs text-gray-400 mt-1">PNG, JPG, SVG</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code du projet -->
+        <div class="col-span-full">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">
+                <i class="fas fa-code mr-2 text-purple-500"></i>Code et fichiers
+            </h3>
+            <div class="space-y-3">
+                {% if project.id == 1 %}
+                <!-- Fichiers pour Application de Gestion -->
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-code text-blue-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">dashboard.html.twig</p>
+                            <p class="text-sm text-gray-500">Template Twig • 4.2 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-js text-yellow-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">app.js</p>
+                            <p class="text-sm text-gray-500">JavaScript • 8.7 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                {% elseif project.id == 2 %}
+                <!-- Fichiers pour API REST -->
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-code text-green-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">server.js</p>
+                            <p class="text-sm text-gray-500">Node.js • 12.3 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fab fa-node-js text-green-600 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">package.json</p>
+                            <p class="text-sm text-gray-500">Configuration • 1.2 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                {% elseif project.id == 3 %}
+                <!-- Fichiers pour Application Python -->
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fab fa-python text-blue-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">app.py</p>
+                            <p class="text-sm text-gray-500">Python Flask • 6.8 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">requirements.txt</p>
+                            <p class="text-sm text-gray-500">Dépendances • 0.8 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Fichiers par défaut -->
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-code text-blue-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">index.html</p>
+                            <p class="text-sm text-gray-500">HTML • 2.3 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-css text-purple-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium text-gray-800">styles.css</p>
+                            <p class="text-sm text-gray-500">CSS • 5.1 KB</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-500 hover:text-blue-700" title="Voir">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Bouton pour ajouter plus de fichiers -->
+                <div class="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition duration-200 cursor-pointer" onclick="uploadFile({{ project.id }})">
+                    <div class="text-center">
+                        <i class="fas fa-plus text-xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-500">Ajouter un fichier</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        <i class="fas fa-users mr-2 text-purple-500"></i>
+        Membres de l'équipe
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                {{ project.createdBy.username|slice(0, 1)|upper }}
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800">{{ project.createdBy.username }}</p>
+                <p class="text-xs text-gray-500">
+                    <i class="fas fa-crown text-yellow-500 mr-1"></i>Chef de projet
+                </p>
+            </div>
+        </div>
+        
+        {% for member in project.projectMembers %}
+        <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                {{ member.user.username|slice(0, 1)|upper }}
+            </div>
+            <div>
+                <p class="font-semibold text-gray-800">{{ member.user.username }}</p>
+                <p class="text-xs text-gray-500">Membre</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function resolveIssue(issueId) {
+    if (!confirm('Marquer ce problème comme résolu ?')) return;
+    
+    fetch(`/project-manager/issue/${issueId}/resolve`, {
+        method: 'POST',
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) location.reload();
+    });
+}
+
+function uploadFile(projectId) {
+    alert('Fonctionnalité d\'upload de fichiers à implémenter\nProjet ID: ' + projectId);
+    // Ici on pourrait ouvrir un modal d'upload ou rediriger vers une page d'upload
+}
+
+// Image upload functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadBtn = document.getElementById('upload-btn');
+    const uploadModal = document.getElementById('upload-modal');
+    const closeModal = document.getElementById('close-modal');
+    const cancelUpload = document.getElementById('cancel-upload');
+    const uploadForm = document.getElementById('upload-form');
+    const imageInput = document.getElementById('image-input');
+    const submitUpload = document.getElementById('submit-upload');
+    const uploadProgress = document.getElementById('upload-progress');
+    const imagesContainer = document.getElementById('images-container');
+
+    // Open modal
+    uploadBtn.addEventListener('click', function() {
+        uploadModal.classList.remove('hidden');
+    });
+
+    // Close modal
+    function closeUploadModal() {
+        uploadModal.classList.add('hidden');
+        uploadForm.reset();
+        submitUpload.disabled = true;
+        uploadProgress.classList.add('hidden');
+    }
+
+    closeModal.addEventListener('click', closeUploadModal);
+    cancelUpload.addEventListener('click', closeUploadModal);
+
+    // Enable/disable submit button based on file selection
+    imageInput.addEventListener('change', function() {
+        submitUpload.disabled = !this.files.length;
+    });
+
+    // Handle form submission
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        submitUpload.disabled = true;
+        uploadProgress.classList.remove('hidden');
+
+        // Simulate upload success for now
+        setTimeout(() => {
+            // Add new image to the container (simulated)
+            const imageHtml = `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img src="https://via.placeholder.com/400x300/4F46E5/FFFFFF?text=Image+Uploadée" alt="${imageInput.files[0].name}" class="w-full h-48 object-cover">
+                    <div class="p-3">
+                        <p class="text-sm text-gray-600 truncate">${imageInput.files[0].name}</p>
+                        <p class="text-xs text-gray-400">À l'instant</p>
+                    </div>
+                </div>
+            `;
+            imagesContainer.insertAdjacentHTML('afterbegin', imageHtml);
+            closeUploadModal();
+            uploadProgress.classList.add('hidden');
+            submitUpload.disabled = false;
+        }, 2000);
+
+        // TODO: Replace with actual upload when route is working
+        /*
+        fetch(`/project-manager/project/${projectId}/upload-image`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add new image to the container
+                const imageHtml = `
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <img src="${data.image.url}" alt="${data.image.originalName}" class="w-full h-48 object-cover">
+                        <div class="p-3">
+                            <p class="text-sm text-gray-600 truncate">${data.image.originalName}</p>
+                            <p class="text-xs text-gray-400">À l'instant</p>
+                        </div>
+                    </div>
+                `;
+                imagesContainer.insertAdjacentHTML('afterbegin', imageHtml);
+                closeUploadModal();
+            } else {
+                alert('Erreur: ' + data.error);
+                submitUpload.disabled = false;
+            }
+            uploadProgress.classList.add('hidden');
+        })
+        .catch(error => {
+            alert('Erreur lors de l\'upload');
+            submitUpload.disabled = false;
+            uploadProgress.classList.add('hidden');
+        });
+        */
+    });
+});
+
+function uploadImage(projectId) {
+    // This function is now handled by the modal above
+}
+</script>
+{% endblock %}

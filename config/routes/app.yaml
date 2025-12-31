@@ -1,0 +1,112 @@
+
+# Routes de sécurité
+app_login:
+    path: /login
+    controller: App\Controller\SecurityController::login
+
+app_logout:
+    path: /logout
+    controller: App\Controller\SecurityController::logout
+
+# Routes générales
+app_home:
+    path: /
+    controller: App\Controller\DashboardController::home
+
+app_dashboard:
+    path: /dashboard
+    controller: App\Controller\DashboardController::dashboard
+
+# Routes Admin
+admin_dashboard:
+    path: /admin
+    controller: App\Controller\AdminController::dashboard
+
+admin_users:
+    path: /admin/users
+    controller: App\Controller\AdminController::users
+
+admin_user_new:
+    path: /admin/user/new
+    controller: App\Controller\AdminController::newUser
+
+admin_user_edit:
+    path: /admin/user/{id}/edit
+    controller: App\Controller\AdminController::editUser
+
+admin_user_delete:
+    path: /admin/user/{id}/delete
+    controller: App\Controller\AdminController::deleteUser
+    methods: [POST]
+
+admin_workspaces:
+    path: /admin/workspaces
+    controller: App\Controller\AdminController::workspaces
+
+admin_workspace_new:
+    path: /admin/workspace/new
+    controller: App\Controller\AdminController::newWorkspace
+
+admin_workspace_edit:
+    path: /admin/workspace/{id}/edit
+    controller: App\Controller\AdminController::editWorkspace
+
+admin_system_lock:
+    path: /admin/system/lock
+    controller: App\Controller\AdminController::lockSystem
+    methods: [POST]
+
+admin_system_unlock:
+    path: /admin/system/unlock
+    controller: App\Controller\AdminController::unlockSystem
+    methods: [POST]
+
+# Routes Project Manager
+pm_project_new:
+    path: /project-manager/project/new
+    controller: App\Controller\ProjectManagerController::newProject
+
+pm_project_show:
+    path: /project-manager/project/{id}
+    controller: App\Controller\ProjectManagerController::showProject
+
+pm_project_edit:
+    path: /project-manager/project/{id}/edit
+    controller: App\Controller\ProjectManagerController::editProject
+
+pm_task_new:
+    path: /project-manager/project/{id}/task/new
+    controller: App\Controller\ProjectManagerController::newTask
+
+pm_task_edit:
+    path: /project-manager/task/{id}/edit
+    controller: App\Controller\ProjectManagerController::editTask
+
+pm_project_members:
+    path: /project-manager/project/{id}/members
+    controller: App\Controller\ProjectManagerController::projectMembers
+
+pm_add_member:
+    path: /project-manager/project/{id}/member/add
+    controller: App\Controller\ProjectManagerController::addMember
+    methods: [POST]
+
+pm_remove_member:
+    path: /project-manager/project/{projectId}/member/{userId}/remove
+    controller: App\Controller\ProjectManagerController::removeMember
+    methods: [POST]
+
+pm_resolve_issue:
+    path: /project-manager/issue/{id}/resolve
+    controller: App\Controller\ProjectManagerController::resolveIssue
+    methods: [POST]
+
+# Routes User
+user_task_status:
+    path: /user/task/{id}/status
+    controller: App\Controller\UserController::changeTaskStatus
+    methods: [POST]
+
+user_report_issue:
+    path: /user/task/{id}/report
+    controller: App\Controller\UserController::reportIssue

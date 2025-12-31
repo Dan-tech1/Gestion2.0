@@ -1,0 +1,161 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gérer les membres du projet {{ project.name }}{% endblock %}
+
+{% block body %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-users mr-3 text-blue-500"></i>
+                Membres du projet
+            </h1>
+            <p class="text-gray-600 mt-2">{{ project.name }}</p>
+        </div>
+        <a href="{{ path('pm_project_show', {'id': project.id}) }}" class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition duration-200">
+            <i class="fas fa-arrow-left mr-2"></i>Retour au projet
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">Gérer les membres</h2>
+            <p class="text-sm text-gray-600">Ajoutez ou retirez des membres du projet</p>
+        </div>
+
+        <div class="p-6">
+            <div class="space-y-4">
+                {% for user in all_users %}
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition duration-150">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                            {{ user.username|slice(0, 1)|upper }}
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+                            <div class="text-sm text-gray-600">{{ user.email }}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        {% if user.id in current_members %}
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 member-status-{{ user.id }}">
+                                <i class="fas fa-check mr-1"></i>Membre
+                            </span>
+                            {% if user.id != app.user.id %}
+                            <button type="button" onclick="removeMember({{ project.id }}, {{ user.id }})" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition duration-200 remove-btn-{{ user.id }}">
+                                <i class="fas fa-user-minus"></i>
+                            </button>
+                            {% endif %}
+                        {% else %}
+                            <button type="button" onclick="addMember({{ project.id }}, {{ user.id }})" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition duration-200 add-btn-{{ user.id }}">
+                                <i class="fas fa-user-plus"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-users text-4xl mb-3"></i>
+                    <p>Aucun utilisateur trouvé</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addMember(projectId, userId) {
+    const btn = document.querySelector('.add-btn-' + userId);
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    fetch('{{ path('pm_add_member', {'id': project.id}) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: 'user_id=' + userId
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI
+            const container = document.querySelector('.add-btn-' + userId).parentElement;
+            container.innerHTML = `
+                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 member-status-${userId}">
+                    <i class="fas fa-check mr-1"></i>Membre
+                </span>
+                ${userId != {{ app.user.id }} ? `<button type="button" onclick="removeMember(${projectId}, ${userId})" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition duration-200 remove-btn-${userId}">
+                    <i class="fas fa-user-minus"></i>
+                </button>` : ''}
+            `;
+            showMessage('Utilisateur ajouté avec succès', 'success');
+        } else {
+            showMessage(data.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus"></i>';
+        }
+    })
+    .catch(error => {
+        showMessage('Erreur lors de l\'ajout', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-plus"></i>';
+    });
+}
+
+function removeMember(projectId, userId) {
+    if (!confirm('Êtes-vous sûr de vouloir retirer cet utilisateur du projet ?')) {
+        return;
+    }
+
+    const btn = document.querySelector('.remove-btn-' + userId);
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    fetch('{{ path('pm_remove_member', {'projectId': project.id, 'userId': 'USER_ID'}) }}'.replace('USER_ID', userId), {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI
+            const container = document.querySelector('.remove-btn-' + userId).parentElement;
+            container.innerHTML = `
+                <button type="button" onclick="addMember(${projectId}, ${userId})" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition duration-200 add-btn-${userId}">
+                    <i class="fas fa-user-plus"></i>
+                </button>
+            `;
+            showMessage('Utilisateur retiré avec succès', 'success');
+        } else {
+            showMessage(data.message, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-minus"></i>';
+        }
+    })
+    .catch(error => {
+        showMessage('Erreur lors du retrait', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-user-minus"></i>';
+    });
+}
+
+function showMessage(message, type) {
+    // Create message element
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+    msgDiv.textContent = message;
+    document.body.appendChild(msgDiv);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        msgDiv.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

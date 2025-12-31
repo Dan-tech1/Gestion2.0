@@ -1,0 +1,204 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Dashboard{% endblock %}
+
+{% block body %}
+<div class="mb-8">
+    <h1 class="text-4xl font-bold text-gray-800 mb-2">
+        <i class="fas fa-user text-blue-500 mr-3"></i>
+        Bonjour, {{ app.user.username }} !
+    </h1>
+    <p class="text-gray-600">Voici un aperçu de vos tâches et projets</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-tasks text-2xl"></i>
+            </div>
+            <span class="text-4xl font-bold">{{ tasks|length }}</span>
+        </div>
+        <h3 class="text-lg font-semibold">Mes tâches</h3>
+        <p class="text-blue-100 text-sm mt-1">Total assignées</p>
+    </div>
+
+    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-check-circle text-2xl"></i>
+            </div>
+            <span class="text-4xl font-bold">
+                {% set completed = 0 %}
+                {% for task in tasks %}
+                    {% if task.status == 'TERMINE' %}
+                        {% set completed = completed + 1 %}
+                    {% endif %}
+                {% endfor %}
+                {{ completed }}
+            </span>
+        </div>
+        <h3 class="text-lg font-semibold">Terminées</h3>
+        <p class="text-green-100 text-sm mt-1">Tâches complétées</p>
+    </div>
+
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-project-diagram text-2xl"></i>
+            </div>
+            <span class="text-4xl font-bold">{{ projects|length }}</span>
+        </div>
+        <h3 class="text-lg font-semibold">Projets</h3>
+        <p class="text-purple-100 text-sm mt-1">Projets actifs</p>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        <i class="fas fa-list-check mr-2 text-blue-500"></i>
+        Mes Tâches
+    </h2>
+
+    {% if tasks|length > 0 %}
+    <div class="space-y-4">
+        {% for task in tasks %}
+        <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition duration-200 {% if task.status == 'TERMINE' %}bg-gray-50{% endif %}">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 {% if task.status == 'TERMINE' %}line-through text-gray-500{% endif %}">
+                            {{ task.title }}
+                        </h3>
+                        <span class="task-status-badge px-3 py-1 text-xs font-semibold rounded-full" 
+                              data-task-id="{{ task.id }}"
+                              data-status="{{ task.status }}">
+                            {% if task.status == 'TERMINE' %}
+                                <i class="fas fa-check-circle mr-1"></i>Terminé
+                            {% else %}
+                                <i class="fas fa-clock mr-1"></i>En cours
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <p class="text-gray-600 text-sm mb-3">{{ task.description }}</p>
+
+                    <div class="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                        <span>
+                            <i class="fas fa-project-diagram mr-1 text-purple-500"></i>
+                            {{ task.project.name }}
+                        </span>
+                        {% if task.dueDate %}
+                            <span class="{% if task.dueDate < date() and task.status != 'TERMINE' %}text-red-600 font-semibold{% endif %}">
+                                <i class="fas fa-calendar mr-1"></i>
+                                {{ task.dueDate|date('d/m/Y') }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex gap-2">
+                        {% if task.status != 'TERMINE' %}
+                        <button onclick="changeTaskStatus({{ task.id }}, 'TERMINE')" 
+                                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition duration-200">
+                            <i class="fas fa-check mr-1"></i>Marquer comme terminé
+                        </button>
+                        {% else %}
+                        <button onclick="changeTaskStatus({{ task.id }}, 'EN_COURS')" 
+                                class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition duration-200">
+                            <i class="fas fa-redo mr-1"></i>Rouvrir la tâche
+                        </button>
+                        {% endif %}
+                        
+                        <a href="{{ path('user_report_issue', {id: task.id}) }}" 
+                           class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg transition duration-200">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Signaler un problème
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16">
+        <i class="fas fa-clipboard-list text-6xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500 text-lg">Aucune tâche assignée pour le moment</p>
+        <p class="text-gray-400 text-sm mt-2">Vos tâches apparaîtront ici une fois qu'elles vous seront assignées</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+        <i class="fas fa-project-diagram mr-2 text-purple-500"></i>
+        Mes Projets
+    </h2>
+
+    {% if projects|length > 0 %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for project in projects %}
+        <div class="border border-gray-200 rounded-lg p-5 hover:shadow-lg transition duration-300">
+            <div class="flex items-start justify-between mb-3">
+                <h3 class="text-lg font-bold text-gray-800">{{ project.name }}</h3>
+                {% if project.status == 'TERMINE' %}
+                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                        <i class="fas fa-check-circle mr-1"></i>Terminé
+                    </span>
+                {% else %}
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                        <i class="fas fa-spinner mr-1"></i>En cours
+                    </span>
+                {% endif %}
+            </div>
+
+            <p class="text-gray-600 text-sm mb-4">{{ project.description|slice(0, 100) }}{% if project.description|length > 100 %}...{% endif %}</p>
+
+            <div class="text-sm text-gray-500 mb-4">
+                <p class="mb-1">
+                    <i class="fas fa-user-tie mr-1 text-blue-500"></i>
+                    Chef: {{ project.createdBy.username }}
+                </p>
+                <p>
+                    <i class="fas fa-tasks mr-1 text-green-500"></i>
+                    {{ project.tasks|length }} tâche(s)
+                </p>
+            </div>
+
+            <a href="{{ path('pm_project_show', {id: project.id}) }}" 
+               class="block text-center px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition duration-200">
+                <i class="fas fa-eye mr-1"></i>Voir les détails
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-16">
+        <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500 text-lg">Vous n'êtes membre d'aucun projet</p>
+        <p class="text-gray-400 text-sm mt-2">Contactez un chef de projet pour rejoindre un projet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function changeTaskStatus(taskId, newStatus) {
+    const formData = new FormData();
+    formData.append('status', newStatus);
+
+    fetch(`/user/task/${taskId}/status`, {
+        method: 'POST',
+        body: formData,
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}
