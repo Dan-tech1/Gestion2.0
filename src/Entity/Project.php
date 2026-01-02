@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ProjectRepository::class)]
 class Project
 {
-    // ⭐ AJOUTEZ CES DEUX LIGNES
+    // status constants
     public const STATUS_IN_PROGRESS = 'EN_COURS';
     public const STATUS_COMPLETED = 'TERMINE';
 
@@ -56,7 +56,7 @@ class Project
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    // Tous vos getters et setters existants...
+    // les getters et setters
     
     public function getId(): ?int
     {
@@ -163,7 +163,7 @@ class Project
     public function removeImage(ProjectImage $image): static
     {
         if ($this->images->removeElement($image)) {
-            // set the owning side to null (unless already changed)
+            // detachément de l'entité liée si nécessaire 
             if ($image->getProject() === $this) {
                 $image->setProject(null);
             }
@@ -176,7 +176,7 @@ class Project
         return $this->createdAt;
     }
 
-    // ⭐ AJOUTEZ CES MÉTHODES UTILES
+    // vérification des rôles des utilisateurs
     public function isUserManager(User $user): bool
     {
         return $this->createdBy === $user;

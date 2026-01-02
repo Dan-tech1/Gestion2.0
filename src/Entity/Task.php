@@ -51,7 +51,7 @@ class Task
         $this->issues = new ArrayCollection();
     }
 
-    // Tous vos getters et setters existants...
+    // les getters et setters
     
     public function getId(): ?int
     {

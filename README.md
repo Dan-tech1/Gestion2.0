@@ -90,7 +90,3 @@ php bin/phpunit
 - `config/` : Configuration Symfony
 - `migrations/` : Migrations Doctrine
 - `tests/` : Tests unitaires
-
-## Licence
-
-MIT
